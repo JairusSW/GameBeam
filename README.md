@@ -12,4 +12,6 @@ GameBeam is a high-quality remote game service that lets you run games from your
 
 `npm run start`
 
+`serve`
+
 `http://localhost:5000/src/client/client`
