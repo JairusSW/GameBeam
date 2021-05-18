@@ -1,0 +1,108 @@
+<html>
+<link rel="icon" href="/favicon.jpg">
+<script src="../PeerJS.js"></script>
+<title>GameCast</title>
+
+<canvas style="background-color: rgba(100, 148, 237, 0.268); width: 100%; height: 100%; position: fixed; top: 0px;"
+    id="canvasLock"></canvas>
+
+<body style="background-color: rgb(0, 0, 0); margin: 0px;">
+</body>
+<video id="video" style="width: 100%; height: 100%; padding: 0px; position: fixed; top: 0px;" autoplay></video>
+<script type="module">
+
+    var canvas = document.getElementById('canvasLock')
+    var ctx = canvas.getContext('2d');
+
+    const requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock;
+
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#f00";
+    ctx.beginPath();
+    ctx.arc(x, y, RADIUS, 0, degToRad(360), true);
+    ctx.fill();
+
+    canvas.onclick = function () {
+        requestPointerLock()
+        console.log('clicked!')
+    }
+
+    //import * as Peer from 'peerjs';
+
+    let videoOn = false
+
+    let audioOn = false
+
+    const peer = new Peer('peer2', {
+        host: 'localhost',
+        port: 9000,
+        path: '/myapp'
+    });
+
+    peer.on('connection', (conn) => {
+
+        conn.on('data', (data) => {
+            console.log(data)
+            document.querySelector('link').href = data
+        });
+
+        // Mouse/click/keyboard input
+        conn.on('open', () => {
+            document.onmousemove = (mouse) => {
+                conn.send({
+                    type: 'mouse',
+                    x: mouse.x,
+                    y: mouse.y
+                })
+            }
+
+            document.onkeypress = (key) => {
+
+                conn.send({
+                    type: 'key',
+                    data: key.key
+                })
+
+            }
+
+            document.onclick = (click) => {
+
+                conn.send({
+                    type: 'click',
+                    btn: click.button,
+                    dbl: false
+                })
+
+            }
+
+            document.ondblclick = (click) => {
+
+                conn.send({
+                    type: 'click',
+                    btn: click.button,
+                    dbl: true
+                })
+
+            }
+
+        });
+    });
+
+    peer.on('call', async (call) => {
+        const stream = new Audio(null)
+        call.answer(stream.captureStream()); // Answer the call with an A/V stream.
+        call.on('stream', (remoteStream) => {
+
+            console.log('Connection Established!')
+
+            document.getElementById('video').src = null
+            document.getElementById('video').srcObject = remoteStream
+
+        });
+
+    });
+
+</script>
+
+</html>
